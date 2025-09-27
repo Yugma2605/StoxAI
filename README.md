@@ -1,213 +1,286 @@
-<p align="center">
-  <img src="assets/TauricResearch.png" style="width: 60%; height: auto;">
-</p>
+# TradingAgents Frontend
 
-<div align="center" style="line-height: 1;">
-  <a href="https://arxiv.org/abs/2412.20138" target="_blank"><img alt="arXiv" src="https://img.shields.io/badge/arXiv-2412.20138-B31B1B?logo=arxiv"/></a>
-  <a href="https://discord.com/invite/hk9PGKShPK" target="_blank"><img alt="Discord" src="https://img.shields.io/badge/Discord-TradingResearch-7289da?logo=discord&logoColor=white&color=7289da"/></a>
-  <a href="./assets/wechat.png" target="_blank"><img alt="WeChat" src="https://img.shields.io/badge/WeChat-TauricResearch-brightgreen?logo=wechat&logoColor=white"/></a>
-  <a href="https://x.com/TauricResearch" target="_blank"><img alt="X Follow" src="https://img.shields.io/badge/X-TauricResearch-white?logo=x&logoColor=white"/></a>
-  <br>
-  <a href="https://github.com/TauricResearch/" target="_blank"><img alt="Community" src="https://img.shields.io/badge/Join_GitHub_Community-TauricResearch-14C290?logo=discourse"/></a>
-</div>
+A modern web frontend for the TradingAgents multi-agent LLM financial trading framework. This frontend provides a real-time interface to monitor AI agents as they analyze financial markets and make trading decisions.
 
-<div align="center">
-  <!-- Keep these links. Translations will automatically update with the README. -->
-  <a href="https://www.readme-i18n.com/TauricResearch/TradingAgents?lang=de">Deutsch</a> | 
-  <a href="https://www.readme-i18n.com/TauricResearch/TradingAgents?lang=es">Español</a> | 
-  <a href="https://www.readme-i18n.com/TauricResearch/TradingAgents?lang=fr">français</a> | 
-  <a href="https://www.readme-i18n.com/TauricResearch/TradingAgents?lang=ja">日本語</a> | 
-  <a href="https://www.readme-i18n.com/TauricResearch/TradingAgents?lang=ko">한국어</a> | 
-  <a href="https://www.readme-i18n.com/TauricResearch/TradingAgents?lang=pt">Português</a> | 
-  <a href="https://www.readme-i18n.com/TauricResearch/TradingAgents?lang=ru">Русский</a> | 
-  <a href="https://www.readme-i18n.com/TauricResearch/TradingAgents?lang=zh">中文</a>
-</div>
+## 🌟 Features
 
----
+- **Real-time Agent Monitoring**: Watch AI agents work in real-time with live status updates
+- **Interactive Dashboard**: Modern, responsive interface with agent team visualization  
+- **Report Viewer**: Comprehensive analysis reports with markdown rendering
+- **WebSocket Integration**: Live updates during analysis execution
+- **Agent Status Tracking**: Visual progress indicators for each agent team
+- **Responsive Design**: Works on desktop, tablet, and mobile devices
 
-# TradingAgents: Multi-Agents LLM Financial Trading Framework 
+## 🏗️ Architecture
 
-> 🎉 **TradingAgents** officially released! We have received numerous inquiries about the work, and we would like to express our thanks for the enthusiasm in our community.
->
-> So we decided to fully open-source the framework. Looking forward to building impactful projects with you!
+The frontend consists of two main components:
 
-<div align="center">
-<a href="https://www.star-history.com/#TauricResearch/TradingAgents&Date">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=TauricResearch/TradingAgents&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=TauricResearch/TradingAgents&type=Date" />
-   <img alt="TradingAgents Star History" src="https://api.star-history.com/svg?repos=TauricResearch/TradingAgents&type=Date" style="width: 80%; height: auto;" />
- </picture>
-</a>
-</div>
+### Backend API (FastAPI)
+- **REST API**: Endpoints for analysis management and data retrieval
+- **WebSocket Support**: Real-time updates during analysis execution
+- **Session Management**: Track analysis sessions and progress
+- **Agent Status Tracking**: Monitor individual agent progress
+- **Report Generation**: Generate and serve analysis reports
 
-<div align="center">
+### Frontend (React)
+- **React 18**: Modern React with hooks and functional components
+- **Tailwind CSS**: Utility-first CSS framework for styling
+- **React Router**: Client-side routing
+- **WebSocket Integration**: Real-time communication with backend
+- **Responsive Design**: Mobile-first approach
 
-🚀 [TradingAgents](#tradingagents-framework) | ⚡ [Installation & CLI](#installation-and-cli) | 🎬 [Demo](https://www.youtube.com/watch?v=90gr5lwjIho) | 📦 [Package Usage](#tradingagents-package) | 🤝 [Contributing](#contributing) | 📄 [Citation](#citation)
+## 🚀 Quick Start
 
-</div>
+### Prerequisites
 
-## TradingAgents Framework
+- Node.js 16+ and npm
+- Python 3.10+ (for backend)
+- Google API key (for Gemini models)
+- FinnHub API key
 
-TradingAgents is a multi-agent trading framework that mirrors the dynamics of real-world trading firms. By deploying specialized LLM-powered agents: from fundamental analysts, sentiment experts, and technical analysts, to trader, risk management team, the platform collaboratively evaluates market conditions and informs trading decisions. Moreover, these agents engage in dynamic discussions to pinpoint the optimal strategy.
+### 1. Clone and Setup
 
-<p align="center">
-  <img src="assets/schema.png" style="width: 100%; height: auto;">
-</p>
-
-> TradingAgents framework is designed for research purposes. Trading performance may vary based on many factors, including the chosen backbone language models, model temperature, trading periods, the quality of data, and other non-deterministic factors. [It is not intended as financial, investment, or trading advice.](https://tauric.ai/disclaimer/)
-
-Our framework decomposes complex trading tasks into specialized roles. This ensures the system achieves a robust, scalable approach to market analysis and decision-making.
-
-### Analyst Team
-- Fundamentals Analyst: Evaluates company financials and performance metrics, identifying intrinsic values and potential red flags.
-- Sentiment Analyst: Analyzes social media and public sentiment using sentiment scoring algorithms to gauge short-term market mood.
-- News Analyst: Monitors global news and macroeconomic indicators, interpreting the impact of events on market conditions.
-- Technical Analyst: Utilizes technical indicators (like MACD and RSI) to detect trading patterns and forecast price movements.
-
-<p align="center">
-  <img src="assets/analyst.png" width="100%" style="display: inline-block; margin: 0 2%;">
-</p>
-
-### Researcher Team
-- Comprises both bullish and bearish researchers who critically assess the insights provided by the Analyst Team. Through structured debates, they balance potential gains against inherent risks.
-
-<p align="center">
-  <img src="assets/researcher.png" width="70%" style="display: inline-block; margin: 0 2%;">
-</p>
-
-### Trader Agent
-- Composes reports from the analysts and researchers to make informed trading decisions. It determines the timing and magnitude of trades based on comprehensive market insights.
-
-<p align="center">
-  <img src="assets/trader.png" width="70%" style="display: inline-block; margin: 0 2%;">
-</p>
-
-### Risk Management and Portfolio Manager
-- Continuously evaluates portfolio risk by assessing market volatility, liquidity, and other risk factors. The risk management team evaluates and adjusts trading strategies, providing assessment reports to the Portfolio Manager for final decision.
-- The Portfolio Manager approves/rejects the transaction proposal. If approved, the order will be sent to the simulated exchange and executed.
-
-<p align="center">
-  <img src="assets/risk.png" width="70%" style="display: inline-block; margin: 0 2%;">
-</p>
-
-## Installation and CLI
-
-### Installation
-
-Clone TradingAgents:
 ```bash
-git clone https://github.com/TauricResearch/TradingAgents.git
+# Clone the repository
+git clone <repository-url>
 cd TradingAgents
-```
 
-Create a virtual environment in any of your favorite environment managers:
-```bash
-conda create -n tradingagents python=3.13
-conda activate tradingagents
-```
-
-Install dependencies:
-```bash
+# Install TradingAgents dependencies
 pip install -r requirements.txt
 ```
 
-### Required APIs
+### 2. Start the Backend
 
-You will also need the FinnHub API for financial data. All of our code is implemented with the free tier.
 ```bash
-export FINNHUB_API_KEY=$YOUR_FINNHUB_API_KEY
+# Navigate to backend directory
+cd frontend/backend
+
+# Set environment variables
+export GOOGLE_API_KEY=your_google_api_key
+export FINNHUB_API_KEY=your_finnhub_api_key
+
+# Start the backend server
+python main.py
 ```
 
-You will need the OpenAI API for all the agents.
+The backend will be available at `http://localhost:8000`
+
+### 3. Start the Frontend
+
 ```bash
-export OPENAI_API_KEY=$YOUR_OPENAI_API_KEY
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start the development server
+npm start
 ```
 
-### CLI Usage
+The frontend will be available at `http://localhost:3000`
 
-You can also try out the CLI directly by running:
+## 📁 Project Structure
+
+```
+frontend/
+├── backend/                 # FastAPI backend
+│   ├── main.py             # Main FastAPI application
+│   ├── requirements.txt    # Python dependencies
+│   ├── run.py             # Server runner script
+│   └── start.sh           # Backend startup script
+├── src/                    # React frontend
+│   ├── components/        # React components
+│   │   ├── Dashboard.js   # Main dashboard
+│   │   ├── AnalysisForm.js # Analysis configuration
+│   │   ├── AgentMonitor.js # Real-time monitoring
+│   │   └── ReportsViewer.js # Report viewing
+│   ├── App.js             # Main app component
+│   └── index.js           # React entry point
+├── public/                 # Static assets
+├── package.json           # Node.js dependencies
+├── tailwind.config.js     # Tailwind configuration
+└── start.sh               # Frontend startup script
+```
+
+## 🎯 Usage
+
+### 1. Start Analysis
+
+1. Navigate to the dashboard
+2. Click "Start Analysis" 
+3. Configure your analysis parameters:
+   - **Ticker Symbol**: Stock symbol to analyze (e.g., AAPL, MSFT)
+   - **Analysis Date**: Date for the analysis
+   - **Analysts**: Select which analyst teams to include
+   - **Research Depth**: Number of debate rounds (1-3)
+   - **LLM Configuration**: Choose models and providers
+
+### 2. Monitor Progress
+
+1. Watch agents work in real-time
+2. See progress updates for each agent team:
+   - **Analyst Team**: Market, Social, News, Fundamentals
+   - **Research Team**: Bull vs Bear debate
+   - **Trading Team**: Strategic planning
+   - **Risk Management**: Multi-perspective assessment
+   - **Portfolio Management**: Final decision
+
+### 3. View Reports
+
+1. Access comprehensive analysis reports
+2. Download reports in markdown format
+3. View individual agent outputs
+4. Track analysis status and completion
+
+## 🔧 Configuration
+
+### Backend Configuration
+
+Environment variables for the backend:
+
 ```bash
-python -m cli.main
-```
-You will see a screen where you can select your desired tickers, date, LLMs, research depth, etc.
+# Required
+GOOGLE_API_KEY=your_google_api_key
+FINNHUB_API_KEY=your_finnhub_api_key
 
-<p align="center">
-  <img src="assets/cli/cli_init.png" width="100%" style="display: inline-block; margin: 0 2%;">
-</p>
-
-An interface will appear showing results as they load, letting you track the agent's progress as it runs.
-
-<p align="center">
-  <img src="assets/cli/cli_news.png" width="100%" style="display: inline-block; margin: 0 2%;">
-</p>
-
-<p align="center">
-  <img src="assets/cli/cli_transaction.png" width="100%" style="display: inline-block; margin: 0 2%;">
-</p>
-
-## TradingAgents Package
-
-### Implementation Details
-
-We built TradingAgents with LangGraph to ensure flexibility and modularity. We utilize `o1-preview` and `gpt-4o` as our deep thinking and fast thinking LLMs for our experiments. However, for testing purposes, we recommend you use `o4-mini` and `gpt-4.1-mini` to save on costs as our framework makes **lots of** API calls.
-
-### Python Usage
-
-To use TradingAgents inside your code, you can import the `tradingagents` module and initialize a `TradingAgentsGraph()` object. The `.propagate()` function will return a decision. You can run `main.py`, here's also a quick example:
-
-```python
-from tradingagents.graph.trading_graph import TradingAgentsGraph
-from tradingagents.default_config import DEFAULT_CONFIG
-
-ta = TradingAgentsGraph(debug=True, config=DEFAULT_CONFIG.copy())
-
-# forward propagate
-_, decision = ta.propagate("NVDA", "2024-05-10")
-print(decision)
+# Optional
+HOST=0.0.0.0
+PORT=8000
+WORKERS=1
+RELOAD=false
+TRADINGAGENTS_RESULTS_DIR=./results
 ```
 
-You can also adjust the default configuration to set your own choice of LLMs, debate rounds, etc.
+### Frontend Configuration
 
-```python
-from tradingagents.graph.trading_graph import TradingAgentsGraph
-from tradingagents.default_config import DEFAULT_CONFIG
+Create a `.env` file in the frontend directory:
 
-# Create a custom config
-config = DEFAULT_CONFIG.copy()
-config["deep_think_llm"] = "gpt-4.1-nano"  # Use a different model
-config["quick_think_llm"] = "gpt-4.1-nano"  # Use a different model
-config["max_debate_rounds"] = 1  # Increase debate rounds
-config["online_tools"] = True # Use online tools or cached data
-
-# Initialize with custom config
-ta = TradingAgentsGraph(debug=True, config=config)
-
-# forward propagate
-_, decision = ta.propagate("NVDA", "2024-05-10")
-print(decision)
+```bash
+REACT_APP_API_URL=http://localhost:8000
+REACT_APP_WS_URL=ws://localhost:8000
 ```
 
-> For `online_tools`, we recommend enabling them for experimentation, as they provide access to real-time data. The agents' offline tools rely on cached data from our **Tauric TradingDB**, a curated dataset we use for backtesting. We're currently in the process of refining this dataset, and we plan to release it soon alongside our upcoming projects. Stay tuned!
+## 🎨 Customization
 
-You can view the full list of configurations in `tradingagents/default_config.py`.
+### Styling
 
-## Contributing
+The frontend uses Tailwind CSS with custom components:
 
-We welcome contributions from the community! Whether it's fixing a bug, improving documentation, or suggesting a new feature, your input helps make this project better. If you are interested in this line of research, please consider joining our open-source financial AI research community [Tauric Research](https://tauric.ai/).
+- **Custom Colors**: Primary, success, warning, danger palettes
+- **Component Classes**: Reusable button, card, and status styles
+- **Responsive Design**: Mobile-first approach
+- **Animations**: Smooth transitions and loading states
 
-## Citation
+### Adding New Features
 
-Please reference our work if you find *TradingAgents* provides you with some help :)
+1. **New Components**: Add to `src/components/`
+2. **API Integration**: Extend backend endpoints
+3. **Styling**: Use Tailwind classes and custom CSS
+4. **State Management**: Use React hooks and context
 
+## 🚀 Deployment
+
+### Development
+
+```bash
+# Backend
+cd frontend/backend
+python main.py
+
+# Frontend  
+cd frontend
+npm start
 ```
-@misc{xiao2025tradingagentsmultiagentsllmfinancial,
-      title={TradingAgents: Multi-Agents LLM Financial Trading Framework}, 
-      author={Yijia Xiao and Edward Sun and Di Luo and Wei Wang},
-      year={2025},
-      eprint={2412.20138},
-      archivePrefix={arXiv},
-      primaryClass={q-fin.TR},
-      url={https://arxiv.org/abs/2412.20138}, 
-}
+
+### Production
+
+```bash
+# Build frontend
+cd frontend
+npm run build
+
+# Serve with nginx or similar
+# Backend can be deployed with gunicorn/uvicorn
 ```
+
+### Docker
+
+```dockerfile
+# Backend Dockerfile
+FROM python:3.10-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+EXPOSE 8000
+CMD ["python", "main.py"]
+
+# Frontend Dockerfile  
+FROM node:16-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+EXPOSE 3000
+CMD ["npm", "start"]
+```
+
+## 🔍 API Documentation
+
+### REST Endpoints
+
+- `GET /` - API health check
+- `GET /health` - Detailed health status
+- `POST /start-analysis` - Start new analysis
+- `GET /analysis/{session_id}` - Get analysis progress
+- `GET /analysis/{session_id}/reports` - Get analysis reports
+- `DELETE /analysis/{session_id}` - Delete analysis session
+
+### WebSocket
+
+- `WS /ws/{session_id}` - Real-time updates
+
+Full API documentation available at `http://localhost:8000/docs`
+
+## 🧪 Testing
+
+### Backend Testing
+
+```bash
+cd frontend/backend
+python -m pytest tests/
+```
+
+### Frontend Testing
+
+```bash
+cd frontend
+npm test
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+This project is part of the TradingAgents framework. See the main repository for license information.
+
+## 🆘 Support
+
+- **Documentation**: Check the API docs at `/docs`
+- **Issues**: Report bugs and feature requests
+- **Community**: Join the TradingAgents community
+
+## 🔗 Links
+
+- **TradingAgents Repository**: [GitHub](https://github.com/TauricResearch/TradingAgents)
+- **API Documentation**: `http://localhost:8000/docs`
+- **Frontend**: `http://localhost:3000`
+- **Backend**: `http://localhost:8000`

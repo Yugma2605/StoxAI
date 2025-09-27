@@ -42,9 +42,13 @@ Reflections from similar situations and lessons learned: {past_memory_str}
 Use this information to deliver a compelling bull argument, refute the bear's concerns, and engage in a dynamic debate that demonstrates the strengths of the bull position. You must also address reflections and learn from lessons and mistakes you made in the past.
 """
 
-        response = llm.invoke(prompt)
-
-        argument = f"Bull Analyst: {response.content}"
+        try:
+            response = llm.invoke(prompt)
+            argument = f"Bull Analyst: {response.content}"
+            print(f"Bull Researcher executed successfully: {argument[:100]}...")
+        except Exception as e:
+            print(f"Bull Researcher failed: {e}")
+            argument = f"Bull Analyst: Error occurred - {str(e)}"
 
         new_investment_debate_state = {
             "history": history + "\n" + argument,

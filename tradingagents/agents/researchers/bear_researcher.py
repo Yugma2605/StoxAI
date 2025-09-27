@@ -44,9 +44,13 @@ Reflections from similar situations and lessons learned: {past_memory_str}
 Use this information to deliver a compelling bear argument, refute the bull's claims, and engage in a dynamic debate that demonstrates the risks and weaknesses of investing in the stock. You must also address reflections and learn from lessons and mistakes you made in the past.
 """
 
-        response = llm.invoke(prompt)
-
-        argument = f"Bear Analyst: {response.content}"
+        try:
+            response = llm.invoke(prompt)
+            argument = f"Bear Analyst: {response.content}"
+            print(f"Bear Researcher executed successfully: {argument[:100]}...")
+        except Exception as e:
+            print(f"Bear Researcher failed: {e}")
+            argument = f"Bear Analyst: Error occurred - {str(e)}"
 
         new_investment_debate_state = {
             "history": history + "\n" + argument,

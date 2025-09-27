@@ -1,6 +1,7 @@
 import chromadb
 from chromadb.config import Settings
 from openai import OpenAI
+import os
 
 
 class FinancialSituationMemory:
@@ -9,7 +10,17 @@ class FinancialSituationMemory:
             self.embedding = "nomic-embed-text"
         else:
             self.embedding = "text-embedding-3-small"
-        self.client = OpenAI(base_url=config["backend_url"])
+        
+        # Initialize client based on LLM provider
+        if config.get("llm_provider", "openai").lower() == "google":
+            # For Google, we'll use OpenAI client with Google's API
+            self.client = OpenAI(
+                base_url="https://generativelanguage.googleapis.com/v1",
+                api_key=os.getenv("GOOGLE_API_KEY")
+            )
+        else:
+            self.client = OpenAI(base_url=config["backend_url"])
+        
         self.chroma_client = chromadb.Client(Settings(allow_reset=True))
         self.situation_collection = self.chroma_client.create_collection(name=name)
 
