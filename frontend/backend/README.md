@@ -25,7 +25,7 @@ FastAPI backend for the TradingAgents multi-agent LLM financial trading framewor
 
 - Python 3.10+
 - TradingAgents framework installed
-- OpenAI API key (or other LLM provider)
+- Google API key (for Gemini models)
 - FinnHub API key
 
 ### Installation
@@ -37,7 +37,7 @@ pip install -r requirements.txt
 
 2. Set environment variables:
 ```bash
-export OPENAI_API_KEY=your_openai_api_key
+export GOOGLE_API_KEY=your_google_api_key
 export FINNHUB_API_KEY=your_finnhub_api_key
 ```
 
@@ -69,10 +69,10 @@ The API will be available at `http://localhost:8000`.
   "analysis_date": "2024-01-01",
   "analysts": ["market", "social", "news", "fundamentals"],
   "research_depth": 1,
-  "llm_provider": "openai",
-  "backend_url": "https://api.openai.com/v1",
-  "shallow_thinker": "gpt-4o-mini",
-  "deep_thinker": "o4-mini"
+  "llm_provider": "google",
+  "backend_url": "https://generativelanguage.googleapis.com/v1beta",
+  "shallow_thinker": "gemini-1.5-flash",
+  "deep_thinker": "gemini-2.0-flash-exp"
 }
 ```
 - **Response**: `{"session_id": "uuid", "status": "started"}`
@@ -177,7 +177,7 @@ The API will be available at `http://localhost:8000`.
 
 ### Environment Variables
 
-- `OPENAI_API_KEY`: OpenAI API key for LLM access
+- `GOOGLE_API_KEY`: Google API key for Gemini LLM access
 - `FINNHUB_API_KEY`: FinnHub API key for financial data
 - `TRADINGAGENTS_RESULTS_DIR`: Directory for analysis results
 
@@ -185,7 +185,7 @@ The API will be available at `http://localhost:8000`.
 
 The backend uses the TradingAgents framework with configurable parameters:
 
-- **LLM Providers**: OpenAI, Anthropic, Google
+- **LLM Providers**: Google Gemini only
 - **Models**: Configurable quick and deep thinking models
 - **Research Depth**: Number of debate rounds (1-3)
 - **Online Tools**: Enable/disable real-time data fetching
@@ -300,5 +300,6 @@ app.add_middleware(
 ## License
 
 This project is part of the TradingAgents framework. See the main repository for license information.
+
 
 

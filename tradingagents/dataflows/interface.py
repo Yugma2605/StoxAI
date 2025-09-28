@@ -12,7 +12,7 @@ import os
 import pandas as pd
 from tqdm import tqdm
 import yfinance as yf
-from openai import OpenAI
+import requests
 from .config import get_config, set_config, DATA_DIR
 
 
@@ -703,105 +703,96 @@ def get_YFin_data(
 
 
 def get_stock_news_openai(ticker, curr_date):
+    """Get stock news using Google Gemini API (keeping function name for compatibility)"""
     config = get_config()
-    client = OpenAI(base_url=config["backend_url"])
-
-    response = client.responses.create(
-        model=config["quick_think_llm"],
-        input=[
-            {
-                "role": "system",
-                "content": [
-                    {
-                        "type": "input_text",
-                        "text": f"Can you search Social Media for {ticker} from 7 days before {curr_date} to {curr_date}? Make sure you only get the data posted during that period.",
-                    }
-                ],
-            }
-        ],
-        text={"format": {"type": "text"}},
-        reasoning={},
-        tools=[
-            {
-                "type": "web_search_preview",
-                "user_location": {"type": "approximate"},
-                "search_context_size": "low",
-            }
-        ],
-        temperature=1,
-        max_output_tokens=4096,
-        top_p=1,
-        store=True,
-    )
-
-    return response.output[1].content[0].text
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        raise ValueError("GOOGLE_API_KEY environment variable is required")
+    
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{config['quick_think_llm']}:generateContent"
+    headers = {
+        "Content-Type": "application/json",
+    }
+    params = {"key": api_key}
+    
+    data = {
+        "contents": [{
+            "parts": [{
+                "text": f"Can you search Social Media for {ticker} from 7 days before {curr_date} to {curr_date}? Make sure you only get the data posted during that period."
+            }]
+        }],
+        "generationConfig": {
+            "temperature": 1,
+            "maxOutputTokens": 4096,
+            "topP": 1,
+        }
+    }
+    
+    response = requests.post(url, headers=headers, params=params, json=data)
+    response.raise_for_status()
+    
+    return response.json()["candidates"][0]["content"]["parts"][0]["text"]
 
 
 def get_global_news_openai(curr_date):
+    """Get global news using Google Gemini API (keeping function name for compatibility)"""
     config = get_config()
-    client = OpenAI(base_url=config["backend_url"])
-
-    response = client.responses.create(
-        model=config["quick_think_llm"],
-        input=[
-            {
-                "role": "system",
-                "content": [
-                    {
-                        "type": "input_text",
-                        "text": f"Can you search global or macroeconomics news from 7 days before {curr_date} to {curr_date} that would be informative for trading purposes? Make sure you only get the data posted during that period.",
-                    }
-                ],
-            }
-        ],
-        text={"format": {"type": "text"}},
-        reasoning={},
-        tools=[
-            {
-                "type": "web_search_preview",
-                "user_location": {"type": "approximate"},
-                "search_context_size": "low",
-            }
-        ],
-        temperature=1,
-        max_output_tokens=4096,
-        top_p=1,
-        store=True,
-    )
-
-    return response.output[1].content[0].text
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        raise ValueError("GOOGLE_API_KEY environment variable is required")
+    
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{config['quick_think_llm']}:generateContent"
+    headers = {
+        "Content-Type": "application/json",
+    }
+    params = {"key": api_key}
+    
+    data = {
+        "contents": [{
+            "parts": [{
+                "text": f"Can you search global or macroeconomics news from 7 days before {curr_date} to {curr_date} that would be informative for trading purposes? Make sure you only get the data posted during that period."
+            }]
+        }],
+        "generationConfig": {
+            "temperature": 1,
+            "maxOutputTokens": 4096,
+            "topP": 1,
+        }
+    }
+    
+    response = requests.post(url, headers=headers, params=params, json=data)
+    response.raise_for_status()
+    
+    return response.json()["candidates"][0]["content"]["parts"][0]["text"]
 
 
 def get_fundamentals_openai(ticker, curr_date):
+    """Get fundamentals using Google Gemini API (keeping function name for compatibility)"""
     config = get_config()
-    client = OpenAI(base_url=config["backend_url"])
-
-    response = client.responses.create(
-        model=config["quick_think_llm"],
-        input=[
-            {
-                "role": "system",
-                "content": [
-                    {
-                        "type": "input_text",
-                        "text": f"Can you search Fundamental for discussions on {ticker} during of the month before {curr_date} to the month of {curr_date}. Make sure you only get the data posted during that period. List as a table, with PE/PS/Cash flow/ etc",
-                    }
-                ],
-            }
-        ],
-        text={"format": {"type": "text"}},
-        reasoning={},
-        tools=[
-            {
-                "type": "web_search_preview",
-                "user_location": {"type": "approximate"},
-                "search_context_size": "low",
-            }
-        ],
-        temperature=1,
-        max_output_tokens=4096,
-        top_p=1,
-        store=True,
-    )
-
-    return response.output[1].content[0].text
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        raise ValueError("GOOGLE_API_KEY environment variable is required")
+    
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{config['quick_think_llm']}:generateContent"
+    headers = {
+        "Content-Type": "application/json",
+    }
+    params = {"key": api_key}
+    
+    data = {
+        "contents": [{
+            "parts": [{
+                "text": f"Can you search Fundamental for discussions on {ticker} during of the month before {curr_date} to the month of {curr_date}. Make sure you only get the data posted during that period. List as a table, with PE/PS/Cash flow/ etc"
+            }]
+        }],
+        "generationConfig": {
+            "temperature": 1,
+            "maxOutputTokens": 4096,
+            "topP": 1,
+        }
+    }
+    
+    response = requests.post(url, headers=headers, params=params, json=data)
+    response.raise_for_status()
+    
+    return response.json()["candidates"][0]["content"]["parts"][0]["text"]

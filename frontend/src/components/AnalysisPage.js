@@ -36,9 +36,7 @@ const AnalysisPage = () => {
   ];
 
   const llmProviders = [
-    { value: 'google', label: 'Google Gemini', description: 'Gemini models via Google AI (Recommended)' },
-    { value: 'openai', label: 'OpenAI', description: 'GPT models via OpenAI API' },
-    { value: 'anthropic', label: 'Anthropic', description: 'Claude models via Anthropic API' }
+    { value: 'google', label: 'Google Gemini', description: 'Gemini models via Google AI (Only supported option)' }
   ];
 
   const handleInputChange = (field, value) => {

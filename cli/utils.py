@@ -127,31 +127,11 @@ def select_shallow_thinking_agent(provider) -> str:
 
     # Define shallow thinking llm engine options with their corresponding model names
     SHALLOW_AGENT_OPTIONS = {
-        "openai": [
-            ("GPT-4o-mini - Fast and efficient for quick tasks", "gpt-4o-mini"),
-            ("GPT-4.1-nano - Ultra-lightweight model for basic operations", "gpt-4.1-nano"),
-            ("GPT-4.1-mini - Compact model with good performance", "gpt-4.1-mini"),
-            ("GPT-4o - Standard model with solid capabilities", "gpt-4o"),
-        ],
-        "anthropic": [
-            ("Claude Haiku 3.5 - Fast inference and standard capabilities", "claude-3-5-haiku-latest"),
-            ("Claude Sonnet 3.5 - Highly capable standard model", "claude-3-5-sonnet-latest"),
-            ("Claude Sonnet 3.7 - Exceptional hybrid reasoning and agentic capabilities", "claude-3-7-sonnet-latest"),
-            ("Claude Sonnet 4 - High performance and excellent reasoning", "claude-sonnet-4-0"),
-        ],
         "google": [
+            ("Gemini 1.5 Flash - Fast and efficient for quick tasks", "gemini-1.5-flash"),
             ("Gemini 2.0 Flash-Lite - Cost efficiency and low latency", "gemini-2.0-flash-lite"),
             ("Gemini 2.0 Flash - Next generation features, speed, and thinking", "gemini-2.0-flash"),
-            ("Gemini 2.5 Flash - Adaptive thinking, cost efficiency", "gemini-2.5-flash-preview-05-20"),
-        ],
-        "openrouter": [
-            ("Meta: Llama 4 Scout", "meta-llama/llama-4-scout:free"),
-            ("Meta: Llama 3.3 8B Instruct - A lightweight and ultra-fast variant of Llama 3.3 70B", "meta-llama/llama-3.3-8b-instruct:free"),
-            ("google/gemini-2.0-flash-exp:free - Gemini Flash 2.0 offers a significantly faster time to first token", "google/gemini-2.0-flash-exp:free"),
-        ],
-        "ollama": [
-            ("llama3.1 local", "llama3.1"),
-            ("llama3.2 local", "llama3.2"),
+            ("Gemini 2.0 Flash-Exp - Experimental features and capabilities", "gemini-2.0-flash-exp"),
         ]
     }
 
@@ -185,35 +165,11 @@ def select_deep_thinking_agent(provider) -> str:
 
     # Define deep thinking llm engine options with their corresponding model names
     DEEP_AGENT_OPTIONS = {
-        "openai": [
-            ("GPT-4.1-nano - Ultra-lightweight model for basic operations", "gpt-4.1-nano"),
-            ("GPT-4.1-mini - Compact model with good performance", "gpt-4.1-mini"),
-            ("GPT-4o - Standard model with solid capabilities", "gpt-4o"),
-            ("o4-mini - Specialized reasoning model (compact)", "o4-mini"),
-            ("o3-mini - Advanced reasoning model (lightweight)", "o3-mini"),
-            ("o3 - Full advanced reasoning model", "o3"),
-            ("o1 - Premier reasoning and problem-solving model", "o1"),
-        ],
-        "anthropic": [
-            ("Claude Haiku 3.5 - Fast inference and standard capabilities", "claude-3-5-haiku-latest"),
-            ("Claude Sonnet 3.5 - Highly capable standard model", "claude-3-5-sonnet-latest"),
-            ("Claude Sonnet 3.7 - Exceptional hybrid reasoning and agentic capabilities", "claude-3-7-sonnet-latest"),
-            ("Claude Sonnet 4 - High performance and excellent reasoning", "claude-sonnet-4-0"),
-            ("Claude Opus 4 - Most powerful Anthropic model", "	claude-opus-4-0"),
-        ],
         "google": [
-            ("Gemini 2.0 Flash-Lite - Cost efficiency and low latency", "gemini-2.0-flash-lite"),
+            ("Gemini 2.0 Flash-Exp - Experimental features and advanced reasoning", "gemini-2.0-flash-exp"),
             ("Gemini 2.0 Flash - Next generation features, speed, and thinking", "gemini-2.0-flash"),
-            ("Gemini 2.5 Flash - Adaptive thinking, cost efficiency", "gemini-2.5-flash-preview-05-20"),
-            ("Gemini 2.5 Pro", "gemini-2.5-pro-preview-06-05"),
-        ],
-        "openrouter": [
-            ("DeepSeek V3 - a 685B-parameter, mixture-of-experts model", "deepseek/deepseek-chat-v3-0324:free"),
-            ("Deepseek - latest iteration of the flagship chat model family from the DeepSeek team.", "deepseek/deepseek-chat-v3-0324:free"),
-        ],
-        "ollama": [
-            ("llama3.1 local", "llama3.1"),
-            ("qwen3", "qwen3"),
+            ("Gemini 1.5 Pro - Advanced reasoning and analysis", "gemini-1.5-pro"),
+            ("Gemini 2.5 Pro - Latest advanced model with enhanced capabilities", "gemini-2.5-pro-preview-06-05"),
         ]
     }
     
@@ -240,14 +196,10 @@ def select_deep_thinking_agent(provider) -> str:
     return choice
 
 def select_llm_provider() -> tuple[str, str]:
-    """Select the OpenAI api url using interactive selection."""
-    # Define OpenAI api options with their corresponding endpoints
+    """Select the Google Gemini API using interactive selection."""
+    # Only Google/Gemini is supported
     BASE_URLS = [
-        ("OpenAI", "https://api.openai.com/v1"),
-        ("Anthropic", "https://api.anthropic.com/"),
-        ("Google", "https://generativelanguage.googleapis.com/v1"),
-        ("Openrouter", "https://openrouter.ai/api/v1"),
-        ("Ollama", "http://localhost:11434/v1"),        
+        ("Google Gemini", "https://generativelanguage.googleapis.com/v1beta"),
     ]
     
     choice = questionary.select(
@@ -267,7 +219,7 @@ def select_llm_provider() -> tuple[str, str]:
     ).ask()
     
     if choice is None:
-        console.print("\n[red]no OpenAI backend selected. Exiting...[/red]")
+        console.print("\n[red]No Google Gemini backend selected. Exiting...[/red]")
         exit(1)
     
     display_name, url = choice

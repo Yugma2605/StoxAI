@@ -300,7 +300,7 @@ def update_display(layout, spinner_text=None):
         # Convert content to string if it's not already
         content_str = content
         if isinstance(content, list):
-            # Handle list of content blocks (Anthropic format)
+            # Handle list of content blocks
             text_parts = []
             for item in content:
                 if isinstance(item, dict):
@@ -463,10 +463,10 @@ def get_user_selections():
     )
     selected_research_depth = select_research_depth()
 
-    # Step 5: OpenAI backend
+    # Step 5: Google Gemini backend
     console.print(
         create_question_box(
-            "Step 5: OpenAI backend", "Select which service to talk to"
+            "Step 5: Google Gemini backend", "Select which service to talk to"
         )
     )
     selected_llm_provider, backend_url = select_llm_provider()
@@ -717,7 +717,7 @@ def extract_content_string(content):
     if isinstance(content, str):
         return content
     elif isinstance(content, list):
-        # Handle Anthropic's list format
+        # Handle list format
         text_parts = []
         for item in content:
             if isinstance(item, dict):

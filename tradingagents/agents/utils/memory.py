@@ -1,36 +1,39 @@
 import chromadb
 from chromadb.config import Settings
-from openai import OpenAI
 import os
+import requests
 
 
 class FinancialSituationMemory:
     def __init__(self, name, config):
-        if config["backend_url"] == "http://localhost:11434/v1":
-            self.embedding = "nomic-embed-text"
-        else:
-            self.embedding = "text-embedding-3-small"
-        
-        # Initialize client based on LLM provider
-        if config.get("llm_provider", "openai").lower() == "google":
-            # For Google, we'll use OpenAI client with Google's API
-            self.client = OpenAI(
-                base_url="https://generativelanguage.googleapis.com/v1",
-                api_key=os.getenv("GOOGLE_API_KEY")
-            )
-        else:
-            self.client = OpenAI(base_url=config["backend_url"])
+        # Use Google's embedding model
+        self.embedding_model = "text-embedding-004"
+        self.api_key = os.getenv("GOOGLE_API_KEY")
+        if not self.api_key:
+            raise ValueError("GOOGLE_API_KEY environment variable is required")
         
         self.chroma_client = chromadb.Client(Settings(allow_reset=True))
         self.situation_collection = self.chroma_client.create_collection(name=name)
 
     def get_embedding(self, text):
-        """Get OpenAI embedding for a text"""
+        """Get Google embedding for a text"""
         
-        response = self.client.embeddings.create(
-            model=self.embedding, input=text
-        )
-        return response.data[0].embedding
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.embedding_model}:embedContent"
+        headers = {
+            "Content-Type": "application/json",
+        }
+        params = {"key": self.api_key}
+        
+        data = {
+            "content": {
+                "parts": [{"text": text}]
+            }
+        }
+        
+        response = requests.post(url, headers=headers, params=params, json=data)
+        response.raise_for_status()
+        
+        return response.json()["embedding"]["values"]
 
     def add_situations(self, situations_and_advice):
         """Add financial situations and their corresponding advice. Parameter is a list of tuples (situation, rec)"""
@@ -56,7 +59,7 @@ class FinancialSituationMemory:
         )
 
     def get_memories(self, current_situation, n_matches=1):
-        """Find matching recommendations using OpenAI embeddings"""
+        """Find matching recommendations using Google embeddings"""
         query_embedding = self.get_embedding(current_situation)
 
         results = self.situation_collection.query(

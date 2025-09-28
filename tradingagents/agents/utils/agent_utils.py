@@ -9,7 +9,7 @@ import functools
 import pandas as pd
 import os
 from dateutil.relativedelta import relativedelta
-from langchain_openai import ChatOpenAI
+# Removed OpenAI import - using Google Gemini only
 import tradingagents.dataflows.interface as interface
 from tradingagents.default_config import DEFAULT_CONFIG
 from langchain_core.messages import HumanMessage
