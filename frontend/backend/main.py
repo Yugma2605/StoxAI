@@ -41,18 +41,22 @@ class ConnectionManager:
         self.active_connections.append(websocket)
 
     def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
 
     async def send_personal_message(self, message: str, websocket: WebSocket):
         await websocket.send_text(message)
 
     async def broadcast(self, message: str):
-        for connection in self.active_connections:
+        dead: List[WebSocket] = []
+        for connection in list(self.active_connections):  # iterate over a snapshot
             try:
                 await connection.send_text(message)
-            except:
-                # Remove dead connections
-                self.active_connections.remove(connection)
+            except Exception:
+                dead.append(connection)
+        # prune dead connections after iteration
+        for d in dead:
+            self.disconnect(d)
 
 manager = ConnectionManager()
 
@@ -172,20 +176,25 @@ async def run_analysis_async(session_id: str, graph: TradingAgentsGraph, request
     """Run the analysis asynchronously and update progress"""
     try:
         progress = analysis_sessions[session_id]
-        
-        # Initialize state
+
         init_agent_state = graph.propagator.create_initial_state(
             request.ticker, request.analysis_date
         )
         args = graph.propagator.get_graph_args()
-        
-        # Stream the analysis
+
+        # Always handle every chunk; don't gate on 'messages'
         for chunk in graph.graph.stream(init_agent_state, **args):
-            print(f"Analysis chunk: {chunk}")  # Debug output
-            if len(chunk.get("messages", [])) > 0:
-                # Update progress based on chunk content
+            try:
                 await update_progress_from_chunk(session_id, chunk)
-                
+            except Exception as inner_e:
+                # keep going, but emit an error update for visibility
+                await manager.broadcast(json.dumps({
+                    "type": "progress_update_error",
+                    "session_id": session_id,
+                    "error": str(inner_e),
+                    "chunk_keys": list(chunk.keys())
+                }))
+
         # Mark as complete
         progress.is_complete = True
         await manager.broadcast(json.dumps({
@@ -193,105 +202,101 @@ async def run_analysis_async(session_id: str, graph: TradingAgentsGraph, request
             "session_id": session_id,
             "final_decision": progress.final_decision
         }))
-        
+
     except Exception as e:
-        # Handle errors
         progress = analysis_sessions.get(session_id)
         if progress:
             progress.is_complete = True
-            await manager.broadcast(json.dumps({
-                "type": "analysis_error",
-                "session_id": session_id,
-                "error": str(e)
-            }))
+        await manager.broadcast(json.dumps({
+            "type": "analysis_error",
+            "session_id": session_id,
+            "error": str(e)
+        }))
 
 async def update_progress_from_chunk(session_id: str, chunk: Dict[str, Any]):
     """Update progress based on analysis chunk"""
     progress = analysis_sessions.get(session_id)
     if not progress:
         return
-    
-    print(f"Updating progress for session {session_id}: {chunk}")  # Debug output
-    
-    # Update reports
+
+    # Map report keys -> (report title, agent name to mark complete)
     report_mappings = {
-        "market_report": "Market Analysis",
-        "sentiment_report": "Social Sentiment", 
-        "news_report": "News Analysis",
-        "fundamentals_report": "Fundamentals Analysis",
-        "investment_plan": "Research Team Decision",
-        "trader_investment_plan": "Trading Plan",
-        "final_trade_decision": "Final Decision"
+        "market_report": ("Market Analysis", "Market Analyst"),
+        "sentiment_report": ("Social Sentiment", "Social Analyst"),
+        "news_report": ("News Analysis", "News Analyst"),
+        "fundamentals_report": ("Fundamentals Analysis", "Fundamentals Analyst"),
+        "investment_plan": ("Research Team Decision", "Research Manager"),
+        "trader_investment_plan": ("Trading Plan", "Trader"),
+        "final_trade_decision": ("Final Decision", "Portfolio Manager"),
     }
-    
-    for key, title in report_mappings.items():
+
+    # Handle high-level reports
+    for key, (title, agent_name) in report_mappings.items():
         if key in chunk and chunk[key]:
             progress.reports[title] = chunk[key]
-            progress.agent_statuses[key.replace("_report", "").replace("_", " ").title()].status = "completed"
-    
-    # Update agent statuses based on chunk content
-    if "market_report" in chunk and chunk["market_report"]:
+            if agent_name in progress.agent_statuses:
+                progress.agent_statuses[agent_name].status = "completed"
+                progress.agent_statuses[agent_name].output = chunk[key]
+
+    # Analyst team granular updates (kept for backwards compatibility if the graph sends these fields)
+    if chunk.get("market_report"):
         progress.agent_statuses["Market Analyst"].status = "completed"
         progress.agent_statuses["Market Analyst"].output = chunk["market_report"]
-    
-    if "sentiment_report" in chunk and chunk["sentiment_report"]:
+
+    if chunk.get("sentiment_report"):
         progress.agent_statuses["Social Analyst"].status = "completed"
         progress.agent_statuses["Social Analyst"].output = chunk["sentiment_report"]
-    
-    if "news_report" in chunk and chunk["news_report"]:
+
+    if chunk.get("news_report"):
         progress.agent_statuses["News Analyst"].status = "completed"
         progress.agent_statuses["News Analyst"].output = chunk["news_report"]
-    
-    if "fundamentals_report" in chunk and chunk["fundamentals_report"]:
+
+    if chunk.get("fundamentals_report"):
         progress.agent_statuses["Fundamentals Analyst"].status = "completed"
         progress.agent_statuses["Fundamentals Analyst"].output = chunk["fundamentals_report"]
-    
-    # Handle research team
-    if "investment_debate_state" in chunk and chunk["investment_debate_state"]:
+
+    # Research team
+    if chunk.get("investment_debate_state"):
         debate_state = chunk["investment_debate_state"]
-        if "bull_history" in debate_state:
+        if debate_state.get("bull_history"):
             progress.agent_statuses["Bull Researcher"].status = "completed"
             progress.agent_statuses["Bull Researcher"].output = debate_state["bull_history"]
-        
-        if "bear_history" in debate_state:
+        if debate_state.get("bear_history"):
             progress.agent_statuses["Bear Researcher"].status = "completed"
             progress.agent_statuses["Bear Researcher"].output = debate_state["bear_history"]
-        
-        if "judge_decision" in debate_state:
+        if debate_state.get("judge_decision"):
             progress.agent_statuses["Research Manager"].status = "completed"
             progress.agent_statuses["Research Manager"].output = debate_state["judge_decision"]
-    
-    # Handle trader
-    if "trader_investment_plan" in chunk and chunk["trader_investment_plan"]:
+
+    # Trader
+    if chunk.get("trader_investment_plan"):
         progress.agent_statuses["Trader"].status = "completed"
         progress.agent_statuses["Trader"].output = chunk["trader_investment_plan"]
-    
-    # Handle risk management
-    if "risk_debate_state" in chunk and chunk["risk_debate_state"]:
+
+    # Risk management
+    if chunk.get("risk_debate_state"):
         risk_state = chunk["risk_debate_state"]
-        if "current_risky_response" in risk_state:
+        if risk_state.get("current_risky_response"):
             progress.agent_statuses["Risky Analyst"].status = "completed"
             progress.agent_statuses["Risky Analyst"].output = risk_state["current_risky_response"]
-        
-        if "current_safe_response" in risk_state:
+        if risk_state.get("current_safe_response"):
             progress.agent_statuses["Safe Analyst"].status = "completed"
             progress.agent_statuses["Safe Analyst"].output = risk_state["current_safe_response"]
-        
-        if "current_neutral_response" in risk_state:
+        if risk_state.get("current_neutral_response"):
             progress.agent_statuses["Neutral Analyst"].status = "completed"
             progress.agent_statuses["Neutral Analyst"].output = risk_state["current_neutral_response"]
-        
-        if "judge_decision" in risk_state:
+        if risk_state.get("judge_decision"):
             progress.agent_statuses["Portfolio Manager"].status = "completed"
             progress.agent_statuses["Portfolio Manager"].output = risk_state["judge_decision"]
             progress.final_decision = risk_state["judge_decision"]
-    
+
     # Broadcast update
     await manager.broadcast(json.dumps({
         "type": "progress_update",
         "session_id": session_id,
         "progress": progress.dict()
     }))
+
 
 @app.get("/analysis/{session_id}")
 async def get_analysis_progress(session_id: str):
