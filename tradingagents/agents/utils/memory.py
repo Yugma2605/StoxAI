@@ -50,7 +50,11 @@ class FinancialSituationMemory:
         )
         headers = {"Content-Type": "application/json"}
         params = {"key": self.api_key}
+
+        # TODO: 9000 chars trim fix
         text = text[:9000]
+
+        
         payload = {"content": {"parts": [{"text": text}]}}
 
         try:
