@@ -10,7 +10,8 @@ from tradingagents.agents.utils.agent_states import AgentState
 from tradingagents.agents.utils.agent_utils import Toolkit
 
 from .conditional_logic import ConditionalLogic
-
+from IPython.display import Image, display
+import os
 
 class GraphSetup:
     """Handles the setup and configuration of the agent graph."""
@@ -200,6 +201,21 @@ class GraphSetup:
         )
 
         workflow.add_edge("Risk Judge", END)
+        app = workflow.compile()
+
+        png_bytes = app.get_graph().draw_mermaid_png()
+
+        # display inline (optional; comment out if not in a notebook)
+
+
+        # save to disk
+        out_path = "artifacts/trading_agents_graph.png"
+        os.makedirs(os.path.dirname(out_path), exist_ok=True)
+        with open(out_path, "wb") as f:
+            f.write(png_bytes)
+
+
 
         # Compile and return
         return workflow.compile()
+    

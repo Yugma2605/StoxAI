@@ -15,25 +15,62 @@ class FinancialSituationMemory:
         self.chroma_client = chromadb.Client(Settings(allow_reset=True))
         self.situation_collection = self.chroma_client.create_collection(name=name)
 
-    def get_embedding(self, text):
-        """Get Google embedding for a text"""
+    # def get_embedding(self, text):
+    #     """Get Google embedding for a text"""
         
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.embedding_model}:embedContent"
-        headers = {
-            "Content-Type": "application/json",
-        }
+    #     url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.embedding_model}:embedContent"
+    #     headers = {
+    #         "Content-Type": "application/json",
+    #     }
+    #     params = {"key": self.api_key}
+        
+    #     data = {
+    #         "content": {
+    #             "parts": [{"text": text}]
+    #         }
+    #     }
+        
+    #     response = requests.post(url, headers=headers, params=params, json=data)
+    #     response.raise_for_status()
+        
+    #     return response.json()["embedding"]["values"]
+
+
+    def get_embedding(self, text: str):
+        """Return a vector embedding for `text` using Google text-embedding-004."""
+        print(f'self.embedding_model------------------------------->: {self.embedding_model}')
+        # 1) Guard against empty input (prevents 400s)
+        if not isinstance(text, str) or not text.strip():
+            # choose: return zeros, or raise. Returning zeros keeps the pipeline flowing.
+            return [0.0] * getattr(self, "dim", 768)  # adjust default dim if needed
+
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{self.embedding_model}:embedContent"
+        )
+        headers = {"Content-Type": "application/json"}
         params = {"key": self.api_key}
-        
-        data = {
-            "content": {
-                "parts": [{"text": text}]
-            }
-        }
-        
-        response = requests.post(url, headers=headers, params=params, json=data)
-        response.raise_for_status()
-        
-        return response.json()["embedding"]["values"]
+        text = text[:9000]
+        payload = {"content": {"parts": [{"text": text}]}}
+
+        try:
+            resp = requests.post(url, headers=headers, params=params, json=payload, timeout=20)
+            resp.raise_for_status()
+        except requests.HTTPError as e:
+            # Bubble up with server message for easier debugging
+            msg = getattr(e.response, "text", str(e))
+            raise RuntimeError(f"Embedding API HTTP error: {msg}") from e
+        except requests.RequestException as e:
+            raise RuntimeError(f"Embedding API request failed: {e}") from e
+
+        data = resp.json()
+        # Expected shape: {"embedding": {"value": [float, ...]}}
+        emb = (data.get("embedding") or {}).get("values")
+        if not isinstance(emb, list):
+            raise RuntimeError(f"Unexpected embedding response: {data}")
+
+        return emb
+
 
     def add_situations(self, situations_and_advice):
         """Add financial situations and their corresponding advice. Parameter is a list of tuples (situation, rec)"""
