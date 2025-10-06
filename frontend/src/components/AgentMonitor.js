@@ -177,7 +177,7 @@ const AgentMonitor = () => {
             }
           }
         }));
-        toast(`${data.current_agent} is working...`, { duration: 2000 });
+        // toast(`${data.current_agent} is working...`, { duration: 2000 });
         setActivityFeed(prev => [...prev, {
           id: Date.now(),
           type: 'active',
@@ -200,7 +200,7 @@ const AgentMonitor = () => {
             }
           }
         }));
-        toast.success(`${data.message}`, { duration: 3000 });
+        // toast.success(`${data.message}`, { duration: 3000 });
         setActivityFeed(prev => [...prev, {
           id: Date.now(),
           type: 'completed',
@@ -227,7 +227,7 @@ const AgentMonitor = () => {
           is_complete: true,
           final_decision: data.final_decision
         }));
-        toast.success('Analysis completed!');
+        // toast.success('Analysis completed!');
         setActivityFeed(prev => [...prev, {
           id: Date.now(),
           type: 'success',
@@ -424,8 +424,7 @@ const AgentMonitor = () => {
           )}
         </div>
 
-        {/* Real-time Activity Feed */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+        {/* <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Real-time Activity</h2>
           <div className="max-h-64 overflow-y-auto space-y-3">
             {activityFeed.length === 0 ? (
@@ -463,7 +462,7 @@ const AgentMonitor = () => {
               ))
             )}
           </div>
-        </div>
+        </div> */}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Agent Teams */}
