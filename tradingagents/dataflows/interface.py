@@ -293,7 +293,14 @@ def get_google_news(
     before = start_date - relativedelta(days=look_back_days)
     before = before.strftime("%Y-%m-%d")
 
-    news_results = getNewsData(query, before, curr_date)
+    try:
+        # Use fast news gathering with limited results
+        from .fast_news_utils import fast_news_gatherer
+        news_results = fast_news_gatherer.get_google_news_fast(query, before, curr_date, max_results=5)
+    except Exception as e:
+        print(f"Error in fast Google News, falling back to original: {e}")
+        # Fallback to original method with reduced pages
+        news_results = getNewsData(query, before, curr_date, max_pages=1)
 
     news_str = ""
 
@@ -723,12 +730,12 @@ def get_stock_news_openai(ticker, curr_date):
         }],
         "generationConfig": {
             "temperature": 1,
-            "maxOutputTokens": 4096,
+            "maxOutputTokens": 2048,  # Reduced for faster response
             "topP": 1,
         }
     }
     
-    response = requests.post(url, headers=headers, params=params, json=data)
+    response = requests.post(url, headers=headers, params=params, json=data, timeout=30)
     response.raise_for_status()
     
     return response.json()["candidates"][0]["content"]["parts"][0]["text"]
@@ -755,12 +762,12 @@ def get_global_news_openai(curr_date):
         }],
         "generationConfig": {
             "temperature": 1,
-            "maxOutputTokens": 4096,
+            "maxOutputTokens": 2048,  # Reduced for faster response
             "topP": 1,
         }
     }
     
-    response = requests.post(url, headers=headers, params=params, json=data)
+    response = requests.post(url, headers=headers, params=params, json=data, timeout=30)
     response.raise_for_status()
     
     return response.json()["candidates"][0]["content"]["parts"][0]["text"]

@@ -6,6 +6,7 @@ praw
 feedparser
 stockstats
 eodhd
+IPython
 langgraph
 chromadb
 setuptools
@@ -22,3 +23,4 @@ chainlit
 rich
 questionary
 langchain-google-genai
+alpaca-trade-api

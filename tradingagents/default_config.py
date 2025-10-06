@@ -13,10 +13,14 @@ DEFAULT_CONFIG = {
     "deep_think_llm": "gemini-2.0-flash-exp",
     "quick_think_llm": "gemini-1.5-flash",
     "backend_url": "https://generativelanguage.googleapis.com/v1beta",
-    # Debate and discussion settings
+    # Debate and discussion settings - optimized for speed
     "max_debate_rounds": 1,
     "max_risk_discuss_rounds": 1,
-    "max_recur_limit": 100,
+    "max_recur_limit": 50,  # Reduced for faster execution
     # Tool settings
     "online_tools": True,
+    # Performance optimizations
+    "timeout_seconds": 30,  # Global timeout for all operations
+    "max_news_results": 10,  # Limit news results for faster processing
+    "parallel_processing": True,  # Enable parallel processing where possible
 }

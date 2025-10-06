@@ -20,23 +20,24 @@ def is_rate_limited(response):
 
 @retry(
     retry=(retry_if_result(is_rate_limited)),
-    wait=wait_exponential(multiplier=1, min=4, max=60),
-    stop=stop_after_attempt(5),
+    wait=wait_exponential(multiplier=1, min=1, max=10),
+    stop=stop_after_attempt(3),
 )
 def make_request(url, headers):
     """Make a request with retry logic for rate limiting"""
-    # Random delay before each request to avoid detection
-    time.sleep(random.uniform(2, 6))
-    response = requests.get(url, headers=headers)
+    # Reduced delay for faster execution
+    time.sleep(random.uniform(0.5, 1.5))
+    response = requests.get(url, headers=headers, timeout=10)
     return response
 
 
-def getNewsData(query, start_date, end_date):
+def getNewsData(query, start_date, end_date, max_pages=2):
     """
     Scrape Google News search results for a given query and date range.
     query: str - search query
     start_date: str - start date in the format yyyy-mm-dd or mm/dd/yyyy
     end_date: str - end date in the format yyyy-mm-dd or mm/dd/yyyy
+    max_pages: int - maximum number of pages to scrape (default: 2 for faster execution)
     """
     if "-" in start_date:
         start_date = datetime.strptime(start_date, "%Y-%m-%d")
@@ -55,7 +56,9 @@ def getNewsData(query, start_date, end_date):
 
     news_results = []
     page = 0
-    while True:
+    max_results = 20  # Limit total results for faster execution
+    
+    while page < max_pages and len(news_results) < max_results:
         offset = page * 10
         url = (
             f"https://www.google.com/search?q={query}"
@@ -72,6 +75,9 @@ def getNewsData(query, start_date, end_date):
                 break  # No more results found
 
             for el in results_on_page:
+                if len(news_results) >= max_results:
+                    break
+                    
                 try:
                     link = el.find("a")["href"]
                     title = el.select_one("div.MBeuO").get_text()
@@ -91,8 +97,6 @@ def getNewsData(query, start_date, end_date):
                     print(f"Error processing result: {e}")
                     # If one of the fields is not found, skip this result
                     continue
-
-            # Update the progress bar with the current count of results scraped
 
             # Check for the "Next" link (pagination)
             next_link = soup.find("a", id="pnnext")

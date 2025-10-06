@@ -2,43 +2,25 @@ import chromadb
 from chromadb.config import Settings
 import os
 import requests
+from chromadb.errors import NotFoundError 
 
 
 class FinancialSituationMemory:
     def __init__(self, name, config):
-        # Use Google's embedding model
         self.embedding_model = "text-embedding-004"
         self.api_key = os.getenv("GOOGLE_API_KEY")
         if not self.api_key:
             raise ValueError("GOOGLE_API_KEY environment variable is required")
         
         self.chroma_client = chromadb.Client(Settings(allow_reset=True))
-        self.situation_collection = self.chroma_client.create_collection(name=name)
 
-    # def get_embedding(self, text):
-    #     """Get Google embedding for a text"""
-        
-    #     url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.embedding_model}:embedContent"
-    #     headers = {
-    #         "Content-Type": "application/json",
-    #     }
-    #     params = {"key": self.api_key}
-        
-    #     data = {
-    #         "content": {
-    #             "parts": [{"text": text}]
-    #         }
-    #     }
-        
-    #     response = requests.post(url, headers=headers, params=params, json=data)
-    #     response.raise_for_status()
-        
-    #     return response.json()["embedding"]["values"]
-
-
+        try:
+            self.situation_collection = self.chroma_client.get_collection(name=name)
+        except NotFoundError:
+            self.situation_collection = self.chroma_client.create_collection(name=name)
     def get_embedding(self, text: str):
         """Return a vector embedding for `text` using Google text-embedding-004."""
-        print(f'self.embedding_model------------------------------->: {self.embedding_model}')
+        # print(f'self.embedding_model------------------------------->: {self.embedding_model}')
         # 1) Guard against empty input (prevents 400s)
         if not isinstance(text, str) or not text.strip():
             # choose: return zeros, or raise. Returning zeros keeps the pipeline flowing.

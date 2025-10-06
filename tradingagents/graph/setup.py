@@ -203,16 +203,22 @@ class GraphSetup:
         workflow.add_edge("Risk Judge", END)
         app = workflow.compile()
 
-        png_bytes = app.get_graph().draw_mermaid_png()
-
-        # display inline (optional; comment out if not in a notebook)
-
-
-        # save to disk
-        out_path = "artifacts/trading_agents_graph.png"
-        os.makedirs(os.path.dirname(out_path), exist_ok=True)
-        with open(out_path, "wb") as f:
-            f.write(png_bytes)
+        # Try to generate the graph visualization with error handling
+        try:
+            png_bytes = app.get_graph().draw_mermaid_png(max_retries=3, retry_delay=1.0)
+            
+            # Save to disk
+            out_path = "artifacts/trading_agents_graph.png"
+            os.makedirs(os.path.dirname(out_path), exist_ok=True)
+            with open(out_path, "wb") as f:
+                f.write(png_bytes)
+            print(f"Graph visualization saved to {out_path}")
+            
+        except Exception as e:
+            print(f"Warning: Could not generate graph visualization: {e}")
+            print("The application will continue without the graph image.")
+            # Create the artifacts directory anyway
+            os.makedirs("artifacts", exist_ok=True)
 
 
 

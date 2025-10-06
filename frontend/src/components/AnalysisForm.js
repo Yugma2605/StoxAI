@@ -57,30 +57,46 @@ const AnalysisForm = ({ onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
+  
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/start-analysis`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      // Show immediate feedback
+      
+      
+      // Start the analysis request and wait for response
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || "http://localhost:8000"}/start-analysis`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        }
+      );
+  
+      
+      if (!response.ok) throw new Error("Failed to start analysis");
 
-      if (!response.ok) {
-        throw new Error('Failed to start analysis');
-      }
-
-      const result = await response.json();
-      toast.success('Analysis started successfully!');
+      const { session_id } = await response.json();
+      toast.success("Starting analysis...",session_id);
+      console.log("session_id",session_id);
       onClose();
-      navigate(`/monitor/${result.session_id}`);
+      console.log("Timing out for 4 seconds",session_id);
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      console.log(`🚀 Analysis started with session ID: ${session_id}`);
+      // Navigate directly to the real session ID
+      navigate(`/monitor/${session_id}`, { replace: true });
+      console.log(`✅ Redirected to: /monitor/${session_id}`);
+      
     } catch (error) {
       toast.error(`Failed to start analysis: ${error.message}`);
+      console.error(error);
+      // Redirect back to home on error
+      navigate('/', { replace: true });
     } finally {
       setIsLoading(false);
     }
   };
+  
+  
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

@@ -26,19 +26,35 @@ const ReportsViewer = () => {
 
   const fetchReportData = async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/reports/${sessionId}`);
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || "http://localhost:8000"}/analysis/${sessionId}/reports`
+      );
+  
+      // ✅ Only parse once
+      const data = await response.json();
+      console.log("Response:", data);
+  
       if (response.ok) {
-        const data = await response.json();
         setReportData(data);
+      } else if (response.status === 404) {
+        console.warn("Session not found, redirecting to dashboard");
+        navigate("/");
       } else {
-        throw new Error('Failed to fetch report data');
+        throw new Error("Failed to fetch report data");
       }
     } catch (error) {
-      console.error('Error fetching report data:', error);
+      console.error("Error fetching report data:", error);
+      if (
+        error.message.includes("Failed to fetch") ||
+        error.message.includes("404")
+      ) {
+        navigate("/");
+      }
     } finally {
       setIsLoading(false);
     }
   };
+  
 
   useEffect(() => {
     fetchReportData();
@@ -113,14 +129,19 @@ const ReportsViewer = () => {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Analysis Report</h2>
           
-          {reportData.final_decision ? (
-            <div className="prose max-w-none">
-              <ReactMarkdown>{reportData.final_decision}</ReactMarkdown>
-            </div>
+          {reportData.reports ? (
+            Object.entries(reportData.reports).map(([title, content]) => (
+              <div key={title} className="mb-8">
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">{title}</h3>
+                <div className="prose max-w-none">
+                  <ReactMarkdown>{content}</ReactMarkdown>
+                </div>
+              </div>
+            ))
           ) : (
             <div className="text-center py-12">
               <Target className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No final decision available yet.</p>
+              <p className="text-gray-500">No reports available yet.</p>
             </div>
           )}
         </div>
@@ -130,5 +151,6 @@ const ReportsViewer = () => {
 };
 
 export default ReportsViewer;
+
 
 

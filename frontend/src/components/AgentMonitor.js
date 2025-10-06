@@ -24,6 +24,7 @@ const AgentMonitor = () => {
   const [analysisData, setAnalysisData] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState(null);
+  const [activityFeed, setActivityFeed] = useState([]);
   const wsRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
 
@@ -71,50 +72,152 @@ const AgentMonitor = () => {
   };
 
   const connectWebSocket = useCallback(() => {
+    console.log("---------------------------",analysisData);
+    // if(!analysisData) return;
+    console.log(`🔌 Connecting WebSocket to session: ${sessionId}`);
+    
     try {
       const wsUrl = process.env.REACT_APP_WS_URL || 'ws://localhost:8000';
       const ws = new WebSocket(`${wsUrl}/ws/${sessionId}`);
       
       ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.log(`🔌 WebSocket connected to session: ${sessionId}`);
         setIsConnected(true);
         if (reconnectTimeoutRef.current) {
           clearTimeout(reconnectTimeoutRef.current);
         }
+        // Send initial ping to establish connection
+        ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
       };
 
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
+          console.log('📨 WebSocket message received:', data.type);
+          
+          // Handle ping messages
+          if (data.type === 'ping') {
+            console.log('🏓 Received ping, sending pong');
+            ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
+            return;
+          }
+          
           handleWebSocketMessage(data);
         } catch (error) {
           console.error('Error parsing WebSocket message:', error);
         }
       };
 
-      ws.onclose = () => {
-        console.log('WebSocket disconnected');
+      ws.onclose = (event) => {
+        console.log(`🔌 WebSocket disconnected: ${event.code} - ${event.reason}`);
         setIsConnected(false);
-        // Attempt to reconnect after 3 seconds
-        reconnectTimeoutRef.current = setTimeout(() => {
-          connectWebSocket();
-        }, 3000);
+        
+        // Only attempt to reconnect if it's not a normal closure and not a temporary session
+        if (event.code !== 1000 && !sessionId.startsWith('temp-')) {
+          console.log(`🔄 Attempting to reconnect WebSocket in 5 seconds... (code: ${event.code})`);
+          reconnectTimeoutRef.current = setTimeout(() => {
+            console.log('🔄 Reconnecting WebSocket...');
+            connectWebSocket();
+          }, 5000); // Increased delay to 5 seconds
+        } else if (event.code === 1000) {
+          console.log('✅ WebSocket closed normally');
+        } else if (event.code === 1008) {
+          console.log('❌ Session not found, will retry connection');
+          // Retry after a longer delay for session not found
+          reconnectTimeoutRef.current = setTimeout(() => {
+            console.log('🔄 Retrying WebSocket connection after session not found...');
+            connectWebSocket();
+          }, 10000); // 10 second delay for session not found
+        }
       };
 
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.error('❌ WebSocket error:', error);
         setIsConnected(false);
+        // Don't show error toast for temporary sessions
+        if (!sessionId.startsWith('temp-')) {
+          toast.error('WebSocket connection error');
+        }
       };
 
       wsRef.current = ws;
     } catch (error) {
       console.error('Error connecting WebSocket:', error);
       setIsConnected(false);
+      toast.error('Failed to connect to WebSocket');
     }
   }, [sessionId]);
 
   const handleWebSocketMessage = (data) => {
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`📨 Processing WebSocket message: ${data.type}`, data);
+    
     switch (data.type) {
+      case 'analysis_started':
+        toast.success('Analysis started! Agents are initializing...');
+        setActivityFeed(prev => [...prev, {
+          id: Date.now(),
+          type: 'info',
+          message: 'Analysis started - initializing agents...',
+          timestamp,
+          agent: null
+        }]);
+        break;
+      case 'agent_active':
+        // Update the current agent status to in_progress
+        setAnalysisData(prev => ({
+          ...prev,
+          current_agent: data.current_agent,
+          agent_statuses: {
+            ...prev.agent_statuses,
+            [data.current_agent]: {
+              ...prev.agent_statuses[data.current_agent],
+              status: 'in_progress',
+              timestamp: new Date().toISOString()
+            }
+          }
+        }));
+        toast(`${data.current_agent} is working...`, { duration: 2000 });
+        setActivityFeed(prev => [...prev, {
+          id: Date.now(),
+          type: 'active',
+          message: `${data.current_agent} is working...`,
+          timestamp,
+          agent: data.current_agent
+        }]);
+        break;
+      case 'agent_completed':
+        // Update the agent status to completed and add output
+        setAnalysisData(prev => ({
+          ...prev,
+          agent_statuses: {
+            ...prev.agent_statuses,
+            [data.agent]: {
+              ...prev.agent_statuses[data.agent],
+              status: 'completed',
+              output: data.output,
+              timestamp: new Date().toISOString()
+            }
+          }
+        }));
+        toast.success(`${data.message}`, { duration: 3000 });
+        setActivityFeed(prev => [...prev, {
+          id: Date.now(),
+          type: 'completed',
+          message: data.message,
+          timestamp,
+          agent: data.agent,
+          output: data.output
+        }]);
+        break;
+      case 'temp_session':
+        // Handle temporary session message
+        console.log('Temporary session detected:', data.message);
+        break;
+      case 'connection_established':
+        console.log('✅ WebSocket connection established:', data.session_id);
+        toast.success('Connected to analysis session');
+        break;
       case 'progress_update':
         setAnalysisData(data.progress);
         break;
@@ -125,31 +228,76 @@ const AgentMonitor = () => {
           final_decision: data.final_decision
         }));
         toast.success('Analysis completed!');
+        setActivityFeed(prev => [...prev, {
+          id: Date.now(),
+          type: 'success',
+          message: 'Analysis completed successfully!',
+          timestamp,
+          agent: null
+        }]);
         break;
       case 'analysis_error':
         toast.error(`Analysis failed: ${data.error}`);
+        setActivityFeed(prev => [...prev, {
+          id: Date.now(),
+          type: 'error',
+          message: `Analysis failed: ${data.error}`,
+          timestamp,
+          agent: null
+        }]);
+        break;
+      case 'progress_update_error':
+        toast.error(`Progress update error: ${data.error}`);
+        setActivityFeed(prev => [...prev, {
+          id: Date.now(),
+          type: 'error',
+          message: `Progress update error: ${data.error}`,
+          timestamp,
+          agent: null
+        }]);
         break;
     }
   };
 
   const fetchAnalysisData = useCallback(async () => {
     try {
+      console.log(`📡 Fetching analysis data for session: ${sessionId}`);
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/analysis/${sessionId}`);
       if (response.ok) {
         const data = await response.json();
+        console.log("📊 Analysis data received:", data);
         setAnalysisData(data);
+      } else if (response.status === 404) {
+        console.warn('Session not found, will retry...');
+        toast.error('Session not found. Waiting for agents to initialize...');
+        setTimeout(fetchAnalysisData, 3000);
+      } else {
+        throw new Error('Failed to fetch analysis data');
       }
     } catch (error) {
       console.error('Error fetching analysis data:', error);
       toast.error('Failed to fetch analysis data');
+      // If it's a network error or session not found, redirect to dashboard
+      if (error.message.includes('Failed to fetch') || error.message.includes('404')) {
+        navigate('/');
+      }
     }
-  }, [sessionId]);
+  }, [sessionId, navigate]);
 
   useEffect(() => {
+    console.log(`🎯 AgentMonitor mounted with sessionId: ${sessionId}`);
+    
+    // Fetch data first
     fetchAnalysisData();
-    connectWebSocket();
+    
+    // Add a small delay before connecting WebSocket to ensure session is ready
+    const connectTimeout = setTimeout(() => {
+      console.log(`⏰ Connecting WebSocket after delay for session: ${sessionId}`);
+      connectWebSocket();
+    }, 1000); // 1 second delay
 
     return () => {
+      clearTimeout(connectTimeout);
       if (wsRef.current) {
         wsRef.current.close();
       }
@@ -158,6 +306,8 @@ const AgentMonitor = () => {
       }
     };
   }, [sessionId, fetchAnalysisData, connectWebSocket]);
+
+  // No need for complex URL change detection since we're using React Router navigation
 
   const getProgressPercentage = () => {
     if (!analysisData?.agent_statuses) return 0;
@@ -192,6 +342,7 @@ const AgentMonitor = () => {
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading analysis data...</p>
+          <p className="text-sm text-gray-500 mt-2">Connecting to agents...</p>
         </div>
       </div>
     );
@@ -253,6 +404,16 @@ const AgentMonitor = () => {
               style={{ width: `${getProgressPercentage()}%` }}
             ></div>
           </div>
+          {analysisData.current_agent && !analysisData.is_complete && (
+            <div className="mt-4 p-4 bg-primary-50 border border-primary-200 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <Activity className="w-5 h-5 text-primary-600 animate-pulse" />
+                <span className="font-medium text-primary-800">
+                  {analysisData.current_agent} is currently working...
+                </span>
+              </div>
+            </div>
+          )}
           {analysisData.is_complete && (
             <div className="mt-4 p-4 bg-success-50 border border-success-200 rounded-lg">
               <div className="flex items-center space-x-2">
@@ -261,6 +422,47 @@ const AgentMonitor = () => {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Real-time Activity Feed */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Real-time Activity</h2>
+          <div className="max-h-64 overflow-y-auto space-y-3">
+            {activityFeed.length === 0 ? (
+              <div className="text-center text-gray-500 py-8">
+                <Activity className="w-8 h-8 mx-auto mb-2 text-gray-300 animate-pulse" />
+                <p>Waiting for agent activity...</p>
+                <p className="text-sm text-gray-400 mt-1">Agents will start working shortly</p>
+              </div>
+            ) : (
+              activityFeed.slice(-10).reverse().map((activity) => (
+                <div key={activity.id} className="flex items-start space-x-3 p-3 rounded-lg bg-gray-50">
+                  <div className={`w-2 h-2 rounded-full mt-2 ${
+                    activity.type === 'completed' ? 'bg-success-500' :
+                    activity.type === 'active' ? 'bg-primary-500' :
+                    activity.type === 'error' ? 'bg-danger-500' :
+                    'bg-gray-400'
+                  }`}></div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium text-gray-900">{activity.message}</p>
+                      <span className="text-xs text-gray-500">{activity.timestamp}</span>
+                    </div>
+                    {activity.agent && (
+                      <p className="text-xs text-gray-600 mt-1">
+                        Agent: {activity.agent}
+                      </p>
+                    )}
+                    {activity.output && (
+                      <div className="mt-2 p-2 bg-white rounded border text-xs text-gray-700 max-h-20 overflow-y-auto">
+                        {activity.output.substring(0, 200)}...
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -281,6 +483,7 @@ const AgentMonitor = () => {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">{teamName}</h3>
                   <div className="space-y-3">
                     {teamAgents.map((agent) => (
+                      console.log(agent),
                       <div
                         key={agent.name}
                         className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
@@ -301,10 +504,11 @@ const AgentMonitor = () => {
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(agent.status)}`}>
-                              {agent.status.replace('_', ' ')}
-                            </span>
-                            {getStatusIcon(agent.status)}
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(agent.status)}`}>
+                            {(agent.status || "pending").replace("_", " ")}
+                          </span>
+                          {getStatusIcon(agent.status)}
+
                           </div>
                         </div>
                         {agent.output && (
@@ -327,6 +531,7 @@ const AgentMonitor = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-8">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Agent Details</h3>
               {selectedAgent ? (
+                console.log("Selected Agent:", selectedAgent),
                 <div className="space-y-4">
                   <div className="flex items-center space-x-3">
                     {agentIcons[selectedAgent.name]}
@@ -337,10 +542,11 @@ const AgentMonitor = () => {
                   </div>
                   
                   <div className="flex items-center space-x-2">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(selectedAgent.status)}`}>
-                      {selectedAgent.status.replace('_', ' ')}
-                    </span>
-                    {getStatusIcon(selectedAgent.status)}
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(selectedAgent.status)}`}>
+                    {(selectedAgent.status || "pending").replace("_", " ")}
+                  </span>
+                  {getStatusIcon(selectedAgent.status)}
+
                   </div>
 
                   {selectedAgent.output && (
