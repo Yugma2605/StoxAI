@@ -2,6 +2,8 @@
 
 A modern web frontend for the TradingAgents multi-agent LLM financial trading framework. This frontend provides a real-time interface to monitor AI agents as they analyze financial markets and make trading decisions.
 
+Demo Link - https://drive.google.com/file/d/1LgrRVt_63HtXJfonj01B1airvuPkHTBT/view?usp=sharing
+
 ## 🌟 Features
 
 - **Real-time Agent Monitoring**: Watch AI agents work in real-time with live status updates
