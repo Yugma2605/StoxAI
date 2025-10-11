@@ -201,3 +201,5 @@ def get_fast_news(ticker: str, curr_date: str) -> Dict[str, Any]:
     return fast_news_gatherer.get_news_parallel(ticker, curr_date)
 
 
+
+

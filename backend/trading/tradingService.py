@@ -45,6 +45,10 @@ class TradingService:
             except Exception:
                 # If any error occurs, remain in simulation mode
                 self._alpaca_client = None
+        if self._alpaca_client:
+            print("✅ Connected to Alpaca account")
+        else:
+            print("⚠️ Running in simulation mode")
 
     @property
     def using_alpaca(self) -> bool:

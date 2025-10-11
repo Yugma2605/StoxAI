@@ -16,8 +16,8 @@ env_path = os.path.join(os.path.dirname(__file__), '..', '..', '.env')
 load_dotenv(env_path)
 
 # Add the parent directory to the path to import tradingagents
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
-
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+print(sys.path)
 from tradingagents.graph.trading_graph import TradingAgentsGraph
 from tradingagents.default_config import DEFAULT_CONFIG
 from trading.tradingService import trading_service, TradeRequest

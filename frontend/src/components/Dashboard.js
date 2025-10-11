@@ -99,7 +99,7 @@ const Dashboard = () => {
                 <TrendingUp className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">TradingAgents</h1>
+                <h1 className="text-2xl font-bold text-gray-900">Stox.ai</h1>
                 <p className="text-sm text-gray-600">Multi-Agent LLM Financial Trading Framework</p>
               </div>
             </div>
