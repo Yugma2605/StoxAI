@@ -279,7 +279,6 @@ npm test
 
 ## 🔗 Links
 
-- **TradingAgents Repository**: [GitHub](https://github.com/TauricResearch/TradingAgents)
 - **API Documentation**: `http://localhost:8000/docs`
 - **Frontend**: `http://localhost:3000`
 - **Backend**: `http://localhost:8000`
