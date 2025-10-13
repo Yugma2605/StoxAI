@@ -6,7 +6,7 @@ from .googlenews_utils import *
 from .finnhub_utils import get_data_in_range
 from dateutil.relativedelta import relativedelta
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import os
 import pandas as pd
@@ -14,6 +14,16 @@ from tqdm import tqdm
 import yfinance as yf
 import requests
 from .config import get_config, set_config, DATA_DIR
+from openai import OpenAI
+from google import genai
+from google.genai.types import (
+    GenerateContentConfig,
+    GoogleSearch,
+    HttpOptions,
+    Tool,
+)
+from dotenv import load_dotenv
+load_dotenv()
 
 
 def get_finnhub_news(
@@ -712,33 +722,93 @@ def get_YFin_data(
 def get_stock_news_openai(ticker, curr_date):
     """Get stock news using Google Gemini API (keeping function name for compatibility)"""
     config = get_config()
+    client = genai.Client() # FIXED: Use default configuration
     api_key = os.getenv("GOOGLE_API_KEY")
+
     if not api_key:
         raise ValueError("GOOGLE_API_KEY environment variable is required")
+        
     
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{config['quick_think_llm']}:generateContent"
-    headers = {
-        "Content-Type": "application/json",
-    }
-    params = {"key": api_key}
-    
-    data = {
-        "contents": [{
-            "parts": [{
-                "text": f"Can you search Social Media for {ticker} from 7 days before {curr_date} to {curr_date}? Make sure you only get the data posted during that period."
-            }]
-        }],
-        "generationConfig": {
-            "temperature": 1,
-            "maxOutputTokens": 2048,  # Reduced for faster response
-            "topP": 1,
-        }
-    }
-    
-    response = requests.post(url, headers=headers, params=params, json=data, timeout=30)
-    response.raise_for_status()
-    
-    return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+    prompt = f"""
+    ROLE:
+    You are a professional market news analyst. Your only job is to gather and summarize verifiable, 
+    recent news about the stock **{ticker}** from the last 7 calendar days ending on **{curr_date}**.  
+    You must rely solely on verified information retrieved through Google Search.  
+    If you cannot confirm a detail, explicitly state: "Data unavailable from reliable sources."
+
+    ---
+
+    TASK:
+    Use Google Search to extract and synthesize the most impactful developments relevant to {ticker}, 
+    covering corporate updates, macro factors affecting it, and investor sentiment shifts.  
+    Summarize in a structured, trader-ready report that can directly inform short-term positioning.
+
+    ---
+
+    DATA RULES:
+    • Time window: Last 7 days up to {curr_date}.  
+    • Sources: Official press releases, major financial outlets (Reuters, Bloomberg, CNBC, etc.), SEC filings, and reputable news platforms.  
+    • Avoid: Blogs, speculation, or anonymous rumors unless corroborated by ≥2 primary outlets (then label as "Unverified").  
+    • Always include publication date, source name, and hyperlink when available.  
+    • Distinguish clearly between publication date and the event date mentioned in the story.  
+    • If conflicting reports appear, summarize both and highlight the discrepancy.  
+
+    ---
+
+    OUTPUT STRUCTURE (STRICT):
+    1️ **Scope & Summary Window**
+    - Time window covered and total verified sources used.
+    - Note any missing data or retrieval errors.
+
+    2️ **Top 5 News Highlights**
+    - headline | source | publish_date | event_date (if applicable) | brief thesis | impact level (1–5) | [URL]
+
+    3️ **Detailed Event Summary (Markdown Table)**
+    | Date (Publish) | Scope (Macro/Sector/{ticker}) | Headline | Source | Impact (1–5) | Summary | Link |
+    |----------------|--------------------------------|-----------|---------|--------------|----------|------|
+    Include one row per event, clustering duplicates and listing “Also reported by …” where relevant.
+
+    4️ **Forward Catalysts**
+    - List upcoming events, earnings, court rulings, or regulatory decisions with confirmed or approximate dates.
+
+    5️ **Risk & Tone Analysis**
+    - Summarize tone shifts or emerging risks (e.g., layoffs, lawsuits, downgrades).  
+    - Label tone as: Positive / Neutral / Negative, with reasoning.
+
+    6️ **Trader Takeaway (1 paragraph)**
+    - Clear, factual summary of how current news flow may influence short-term sentiment or risk posture.
+    - No predictions — evidence-only synthesis.
+
+    ---
+
+    QUALITY CHECK BEFORE FINALIZING:
+    ✔ All events fall within the 7-day window or are justified as context.  
+    ✔ Publish vs. event dates clearly labeled.  
+    ✔ Each entry cites a verifiable source link.  
+    ✔ No invented quotes, numbers, or claims.  
+    ✔ Duplicates consolidated; unreliable rumors flagged.  
+    ✔ Summary table completed.
+
+    ---
+
+    BEGIN ANALYSIS NOW.
+    """
+                
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=GenerateContentConfig(
+                tools=[Tool(google_search=GoogleSearch())],
+                temperature=0.7,
+                max_output_tokens=4096,
+            ),
+        )
+        return response.text
+    except Exception as e:
+        # This will now catch other API errors, not the 400 JSON error
+        print(f"An error occurred during the API call: {e}")
+        return ""
 
 
 def get_global_news_openai(curr_date):
@@ -774,32 +844,34 @@ def get_global_news_openai(curr_date):
 
 
 def get_fundamentals_openai(ticker, curr_date):
-    """Get fundamentals using Google Gemini API (keeping function name for compatibility)"""
-    config = get_config()
-    api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
-        raise ValueError("GOOGLE_API_KEY environment variable is required")
+    """Fetch company fundamentals using Gemini with Google Search Tool."""
     
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{config['quick_think_llm']}:generateContent"
-    headers = {
-        "Content-Type": "application/json",
-    }
-    params = {"key": api_key}
+    # Initialize client - REMOVED explicit api_version
+    client = genai.Client() # FIXED: Use default configuration
     
-    data = {
-        "contents": [{
-            "parts": [{
-                "text": f"Can you search Fundamental for discussions on {ticker} during of the month before {curr_date} to the month of {curr_date}. Make sure you only get the data posted during that period. List as a table, with PE/PS/Cash flow/ etc"
-            }]
-        }],
-        "generationConfig": {
-            "temperature": 1,
-            "maxOutputTokens": 4096,
-            "topP": 1,
-        }
-    }
+    # Build the query... (omitted for brevity)
+    prompt = (
+        f"Search and summarize recent fundamentals for {ticker}. "
+        f"Focus on the period between one month before {curr_date} and {curr_date}. "
+        f"List P/E, P/S, EPS, cash flow, market cap, and debt/equity ratios "
+        f"in a table from reliable financial sources."
+    )
     
-    response = requests.post(url, headers=headers, params=params, json=data)
-    response.raise_for_status()
+    # Use Gemini with Google Search
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=GenerateContentConfig(
+                tools=[Tool(google_search=GoogleSearch())],
+                temperature=0.7,
+                max_output_tokens=4096,
+            ),
+        )
+        return response.text
+    except Exception as e:
+        # This will now catch other API errors, not the 400 JSON error
+        print(f"An error occurred during the API call: {e}")
+        return ""
     
-    return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+
