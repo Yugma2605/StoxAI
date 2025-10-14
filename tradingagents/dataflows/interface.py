@@ -14,7 +14,7 @@ from tqdm import tqdm
 import yfinance as yf
 import requests
 from .config import get_config, set_config, DATA_DIR
-from openai import OpenAI
+# from openai import OpenAI
 from google import genai
 from google.genai.types import (
     GenerateContentConfig,
@@ -818,29 +818,16 @@ def get_global_news_openai(curr_date):
     if not api_key:
         raise ValueError("GOOGLE_API_KEY environment variable is required")
     
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{config['quick_think_llm']}:generateContent"
-    headers = {
-        "Content-Type": "application/json",
-    }
-    params = {"key": api_key}
-    
-    data = {
-        "contents": [{
-            "parts": [{
-                "text": f"Can you search global or macroeconomics news from 7 days before {curr_date} to {curr_date} that would be informative for trading purposes? Make sure you only get the data posted during that period."
-            }]
-        }],
-        "generationConfig": {
-            "temperature": 1,
-            "maxOutputTokens": 2048,  # Reduced for faster response
-            "topP": 1,
-        }
-    }
-    
-    response = requests.post(url, headers=headers, params=params, json=data, timeout=30)
-    response.raise_for_status()
-    
-    return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+    # url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent"
+    # headers = {
+    #     "Content-Type": "application/json",
+    # }
+    # params = {"key": api_key}
+    client = genai.Client()
+    response = client.models.generate_content(
+        model="gemini-2.0-flash", contents=f"Can you search global or macroeconomics news from 7 days before {curr_date} to {curr_date} that would be informative for trading purposes? Make sure you only get the data posted during that period. Don't get hypothetical news."
+    )
+    return response.candidates[0].content.parts[0].text
 
 
 def get_fundamentals_openai(ticker, curr_date):
@@ -875,3 +862,5 @@ def get_fundamentals_openai(ticker, curr_date):
         return ""
     
 
+
+get_global_news_openai("2025-10-13")
