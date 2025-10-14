@@ -22,6 +22,7 @@ from google.genai.types import (
     HttpOptions,
     Tool,
 )
+from google.genai import types
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -728,7 +729,12 @@ def get_stock_news_openai(ticker, curr_date):
     if not api_key:
         raise ValueError("GOOGLE_API_KEY environment variable is required")
         
-    
+    grounding_tool = types.Tool(
+        google_search=types.GoogleSearch()
+    )
+    config = types.GenerateContentConfig(
+        tools=[grounding_tool]
+    )
     prompt = f"""
     ROLE:
     You are a professional market news analyst. Your only job is to gather and summarize verifiable, 
@@ -795,16 +801,14 @@ def get_stock_news_openai(ticker, curr_date):
     """
                 
     try:
+        client = genai.Client()
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=GenerateContentConfig(
-                tools=[Tool(google_search=GoogleSearch())],
-                temperature=0.7,
-                max_output_tokens=4096,
-            ),
-        )
-        return response.text
+            model="gemini-2.0-flash", 
+            contents=prompt, 
+            config=config)
+        # print(response.text)
+        return response.candidates[0].content.parts[0].text
+
     except Exception as e:
         # This will now catch other API errors, not the 400 JSON error
         print(f"An error occurred during the API call: {e}")
@@ -824,9 +828,18 @@ def get_global_news_openai(curr_date):
     # }
     # params = {"key": api_key}
     client = genai.Client()
-    response = client.models.generate_content(
-        model="gemini-2.0-flash", contents=f"Can you search global or macroeconomics news from 7 days before {curr_date} to {curr_date} that would be informative for trading purposes? Make sure you only get the data posted during that period. Don't get hypothetical news."
+    grounding_tool = types.Tool(
+        google_search=types.GoogleSearch()
     )
+    config = types.GenerateContentConfig(
+        tools=[grounding_tool]
+    )
+    response = client.models.generate_content(
+        model="gemini-2.0-flash", 
+        contents=f"Can you search global or macroeconomics news from 7 days before {curr_date} to {curr_date} that would be informative for trading purposes? Make sure you only get the data posted during that period. Don't get hypothetical news.",
+        config=config
+    )
+    # print(response.text)
     return response.candidates[0].content.parts[0].text
 
 
@@ -861,6 +874,4 @@ def get_fundamentals_openai(ticker, curr_date):
         print(f"An error occurred during the API call: {e}")
         return ""
     
-
-
-get_global_news_openai("2025-10-13")
+get_stock_news_openai("APPL", "2025-10-13")
