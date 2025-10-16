@@ -111,10 +111,7 @@ const Dashboard = () => {
                 <Play className="w-4 h-4" />
                 <span>Start Analysis</span>
               </button>
-              <button className="btn-secondary flex items-center space-x-2">
-                <Settings className="w-4 h-4" />
-                <span>Settings</span>
-              </button>
+
             </div>
           </div>
         </div>
@@ -137,9 +134,7 @@ const Dashboard = () => {
             >
               Start New Analysis
             </button>
-            <button className="btn-secondary text-lg px-8 py-3">
-              View Documentation
-            </button>
+
           </div>
         </div>
 
